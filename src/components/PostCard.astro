@@ -1,4 +1,7 @@
 ---
+import { localeFromPath, dateLocale, translate } from "../utils/i18n";
+const locale = localeFromPath(Astro.url.pathname);
+const t = (text: string) => translate(locale, text);
 import type { MediaValue, ContentBylineCredit } from "emdash";
 import { Image } from "emdash/ui";
 
@@ -25,7 +28,7 @@ const {
 } = Astro.props;
 
 const formattedDate = date
-	? date.toLocaleDateString("en-US", {
+	? date.toLocaleDateString(dateLocale(locale), {
 			year: "numeric",
 			month: "short",
 			day: "numeric",
@@ -87,7 +90,7 @@ const formattedDate = date
 				}
 				{formattedDate && <time>{formattedDate}</time>}
 				{formattedDate && readingTime && <span class="meta-dot" />}
-				{readingTime && <span>{readingTime} min</span>}
+				{readingTime && <span>{readingTime} {t("min")}</span>}
 			</div>
 			<h2 class="card-title">{title}</h2>
 			{excerpt && <p class="card-excerpt">{excerpt}</p>}

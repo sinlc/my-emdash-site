@@ -1,10 +1,11 @@
 ---
-import { localeFromPath, localeUrl, dateLocale, translate } from "../../utils/i18n";
+import { localeFromPath, localeUrl, dateLocale, translate } from "../../../utils/i18n";
+if (!["zh-hant", "zh-hans"].includes(Astro.params.locale ?? "")) return Astro.redirect("/404");
 const locale = localeFromPath(Astro.url.pathname);
 const t = (text: string) => translate(locale, text);
 import { getEmDashCollection, getTermsForEntries } from "emdash";
-import Base from "../../layouts/Base.astro";
-import { getReadingTime } from "../../utils/reading-time";
+import Base from "../../../layouts/Base.astro";
+import { getReadingTime } from "../../../utils/reading-time";
 
 // Sort in the database rather than in JS — lets the DB use its index on
 // published_at and avoids a full-table scan on the client.

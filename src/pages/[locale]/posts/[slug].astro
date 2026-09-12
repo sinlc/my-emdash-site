@@ -1,5 +1,6 @@
 ---
-import { localeFromPath, localeUrl, dateLocale, translate } from "../../utils/i18n";
+import { localeFromPath, localeUrl, dateLocale, translate } from "../../../utils/i18n";
+if (!["zh-hant", "zh-hans"].includes(Astro.params.locale ?? "")) return Astro.redirect("/404");
 const locale = localeFromPath(Astro.url.pathname);
 const t = (text: string) => translate(locale, text);
 import {
@@ -16,10 +17,10 @@ import {
 	WidgetArea,
 } from "emdash/ui";
 import { Comments, CommentForm } from "emdash/ui/comments";
-import Base from "../../layouts/Base.astro";
-import PostCard from "../../components/PostCard.astro";
-import { getReadingTime } from "../../utils/reading-time";
-import { resolveBlogSiteIdentity } from "../../utils/site-identity";
+import Base from "../../../layouts/Base.astro";
+import PostCard from "../../../components/PostCard.astro";
+import { getReadingTime } from "../../../utils/reading-time";
+import { resolveBlogSiteIdentity } from "../../../utils/site-identity";
 
 const slug = decodeSlug(Astro.params.slug);
 
@@ -27,11 +28,13 @@ if (!slug) {
 	return Astro.redirect("/404");
 }
 
-const { entry: post, cacheHint } = await getEmDashEntry("posts", slug, { locale });
+const { entry: post, cacheHint, fallbackLocale } = await getEmDashEntry("posts", slug, { locale });
 
 if (!post) {
 	return Astro.redirect("/404");
 }
+
+if (fallbackLocale && fallbackLocale !== locale) return Astro.redirect(localeUrl(fallbackLocale as import("../../../utils/i18n").Locale, `/posts/${post.id}`));
 
 if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
 

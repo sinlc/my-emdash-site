@@ -1,5 +1,8 @@
 ---
-import { getMenu, getEmDashCollection, getSiteSettings } from "emdash";
+import { localeFromPath, localeUrl, translate } from "../utils/i18n";
+const locale = localeFromPath(Astro.url.pathname);
+const t = (text: string) => translate(locale, text);
+import { getTranslations, getMenu, getEmDashCollection, getSiteSettings } from "emdash";
 import {
 	WidgetArea,
 	EmDashHead,
@@ -74,11 +77,15 @@ const pageCtx = createPublicPageContext({
 });
 
 // Check if user is logged in (for showing admin link)
+// Only published siblings are exposed in navigation and hreflang.
+const siblings = content ? (await getTranslations(content.collection, content.id)).translations.filter(v => v.status === "published" && v.slug) : [];
+const languageLinks = content ? siblings.map(v => ({ locale: v.locale, url: localeUrl(v.locale as import("../utils/i18n").Locale, `/${content.collection}/${v.slug}`) })) : ["en", "zh-hant", "zh-hans"].map(l => ({ locale: l, url: localeUrl(l as import("../utils/i18n").Locale, Astro.url.pathname === "/posts" || /\/posts\/?$/.test(Astro.url.pathname) ? "/posts" : "/") }));
+const languageNames: Record<string, string> = { en: "English", "zh-hant": "繁體中文", "zh-hans": "简体中文" };
 const isLoggedIn = !!Astro.locals.user;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={locale}>
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -86,6 +93,7 @@ const isLoggedIn = !!Astro.locals.user;
 		<Font cssVariable="--font-mono" />
 		<title>{fullTitle}</title>
 		<EmDashHead page={pageCtx} />
+{(content || ["/", "/posts", "/posts/", "/zh-hant", "/zh-hant/", "/zh-hans", "/zh-hans/", "/zh-hant/posts", "/zh-hans/posts"].includes(Astro.url.pathname)) && languageLinks.map(link => <link rel="alternate" hreflang={link.locale} href={new URL(link.url, Astro.url.origin).href} />)}
 		<script is:inline>
 			// Apply an explicit theme choice immediately to prevent flash.
 			// With no cookie, color-scheme: light dark follows the OS.
@@ -103,7 +111,7 @@ const isLoggedIn = !!Astro.locals.user;
 		<EmDashBodyStart page={pageCtx} />
 		<header class="site-header">
 			<nav class="nav">
-				<a href="/" class="site-title">
+				<a href={localeUrl(locale)} class="site-title">
 					{siteLogo
 						? <img src={siteLogo.url} alt={siteLogo.alt || siteTitle} class="site-logo-img" />
 						: siteTitle
@@ -111,7 +119,7 @@ const isLoggedIn = !!Astro.locals.user;
 				</a>
 				<div class="nav-right">
 					<LiveSearch
-						placeholder="Search..."
+						placeholder={t("Search...")}
 						class="site-search"
 						inputClass="site-search-input"
 						resultsClass="site-search-results"
@@ -121,8 +129,8 @@ const isLoggedIn = !!Astro.locals.user;
 					<div class="nav-links">
 						{
 							menu?.items.map((item) => (
-								<a href={item.url} target={item.target}>
-									{item.label}
+								<a href={item.url === "/" || item.url === "/posts" ? localeUrl(locale, item.url) : item.url} target={item.target}>
+									{t(item.label)}
 								</a>
 							))
 						}
@@ -136,7 +144,10 @@ const isLoggedIn = !!Astro.locals.user;
 					)
 				}
 			</nav>
-		</header>
+		<div class="language-switcher" aria-label="Language">
+{languageLinks.map(link => <a href={link.url} lang={link.locale} hreflang={link.locale} aria-current={link.locale === locale ? "page" : undefined}>{languageNames[link.locale] ?? link.locale}</a>)}
+</div>
+</header>
 
 		<main>
 			<slot />
@@ -146,7 +157,7 @@ const isLoggedIn = !!Astro.locals.user;
 			<div class="footer-inner">
 				<div class="footer-grid">
 					<div class="footer-brand">
-						<a href="/" class="footer-logo">
+						<a href={localeUrl(locale)} class="footer-logo">
 							{siteLogo
 								? <img src={siteLogo.url} alt={siteLogo.alt || siteTitle} class="footer-logo-img" />
 								: siteTitle
@@ -155,10 +166,10 @@ const isLoggedIn = !!Astro.locals.user;
 						<p class="footer-tagline">{siteTagline}</p>
 					</div>
 					<div class="footer-nav">
-						<h4 class="footer-heading">Navigate</h4>
+						<h4 class="footer-heading">{t("Navigate")}</h4>
 						<ul class="footer-links">
-							<li><a href="/">Home</a></li>
-							<li><a href="/posts">All Posts</a></li>
+							<li><a href={localeUrl(locale)}>{t("Home")}</a></li>
+							<li><a href={localeUrl(locale, "/posts")}>{t("All Posts")}</a></li>
 							{
 								pages.slice(0, 3).map((page) => (
 									<li>
@@ -171,13 +182,13 @@ const isLoggedIn = !!Astro.locals.user;
 						</ul>
 					</div>
 					<div class="footer-nav">
-						<h4 class="footer-heading">Connect</h4>
+						<h4 class="footer-heading">{t("Connect")}</h4>
 						<ul class="footer-links">
 							{
 								socialMenu?.items.map((item) => (
 									<li>
 										<a
-											href={item.url}
+											href={item.url === "/" || item.url === "/posts" ? localeUrl(locale, item.url) : item.url}
 											target={item.target}
 											rel={
 												item.target === "_blank"
@@ -185,7 +196,7 @@ const isLoggedIn = !!Astro.locals.user;
 													: undefined
 											}
 										>
-											{item.label}
+											{t(item.label)}
 										</a>
 									</li>
 								))

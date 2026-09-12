@@ -30,3 +30,7 @@
 .nav-admin {
 	margin-inline-start: var(--spacing-5);
 }
+
+.language-switcher { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 1rem; max-width: 1200px; margin: 0 auto; padding: .5rem 1.5rem; font-size: .875rem; }
+.language-switcher a[aria-current="page"] { font-weight: 700; text-decoration: underline; text-underline-offset: .25em; }
+html:lang(zh) .article-content { line-height: 1.9; }
